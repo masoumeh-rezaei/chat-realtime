@@ -4,6 +4,13 @@
   --background: #ffffff;
   --foreground: #171717;
 }
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-thumb {
+    background-color: rgba(100, 100, 100, 0.5);
+    border-radius: 4px;
+}
 
 @theme inline {
   --color-background: var(--background);
