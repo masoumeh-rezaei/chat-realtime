@@ -28,10 +28,19 @@ export default function ChatContainer({
                                           isTyping,
                                       }: ChatContainerProps) {
     return (
-        <div className="flex flex-col h-screen bg-gray-100">
+        <div
+            className="flex flex-col h-screen bg-cover bg-center relative"
+            style={{
+                backgroundImage: "url('/img/bg.png')",
+            }}
+        >
+
+
+            <div className="relative flex flex-col flex-1">
             <ChatHeader user={partner} onBack={onBack} isTyping={isTyping} />
             <ChatBody messages={messages} me={me} />
             <Composer onSend={onSend} onTypingStart={onTypingStart} onTypingStop={onTypingStop} />
+            </div>
         </div>
     );
 }
