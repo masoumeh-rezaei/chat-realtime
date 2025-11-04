@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Check, CheckCheck } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { ChatUser } from '@/types/user';
