@@ -3,7 +3,7 @@
 export interface ChatUser {
     id: string;
     name: string;
-    username: string;
+    username?: string;
     avatar: string;
 }
 
@@ -17,4 +17,20 @@ export interface ChatMessage {
     delivered?: boolean;
     read?: boolean;
     sender?: ChatUser;
+}
+
+export interface TypingEvent {
+    user: ChatUser;
+    typing: boolean;
+}
+
+export interface UnreadCount {
+    [userId: string]: number;
+}
+
+export interface Conversation {
+    id: string;
+    participants: ChatUser[];
+    messages: ChatMessage[];
+    lastUpdated?: string;
 }
