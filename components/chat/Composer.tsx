@@ -1,7 +1,7 @@
 'use client';
 
 import { Send } from 'lucide-react';
-import {useState, useRef, useEffect} from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface ComposerProps {
     onSend: (text: string) => void;
@@ -17,21 +17,20 @@ export default function Composer({ onSend, onTypingStart, onTypingStop }: Compos
         if (!text.trim()) return;
         onSend(text);
         setText('');
-        if (onTypingStop) onTypingStop(); // وقتی پیام فرستاده شد، تایپینگ متوقف شود
+        if (onTypingStop) onTypingStop();
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setText(e.target.value);
 
-        // اطلاع بده که شروع به تایپ کرده
         if (onTypingStart) onTypingStart();
 
-        // اگه مدتی تایپ نکرد، stop بفرست
         if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = setTimeout(() => {
             if (onTypingStop) onTypingStop();
         }, 600);
     };
+
     useEffect(() => {
         return () => {
             if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
@@ -39,20 +38,23 @@ export default function Composer({ onSend, onTypingStart, onTypingStop }: Compos
     }, []);
 
     return (
-        <div className="flex items-center gap-2 p-3 border-t bg-white">
-            <input
-                type="text"
-                value={text}
-                onChange={handleChange}
-                onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSend();
-                }}
-                placeholder="پیامت رو بنویس..."
-                className="flex-1 border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
+        <div className="p-4 bg-gradient-to-r from-green-200 to-blue-200 flex items-center gap-3 border-t border-white/20 backdrop-blur-sm">
+            <div className="flex-1 bg-gradient-to-r from-green-100 to-blue-100 rounded-full px-4 py-2 flex items-center shadow-sm">
+                <input
+                    type="text"
+                    value={text}
+                    onChange={handleChange}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSend();
+                    }}
+                    placeholder="پیامت رو بنویس..."
+                    className="flex-1 bg-transparent outline-none text-gray-800 placeholder-gray-400 text-sm"
+                />
+            </div>
+
             <button
                 onClick={handleSend}
-                className="bg-indigo-600 hover:bg-indigo-700 p-3 rounded-xl text-white transition"
+                className=" text-blue-600  transition-all p-3 rounded-full"
             >
                 <Send className="w-5 h-5" />
             </button>

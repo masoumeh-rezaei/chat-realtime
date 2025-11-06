@@ -34,7 +34,7 @@ export default function ChatContainer({
                 backgroundImage: "url('/img/bg.png')",
             }}
         >
-
+            <div className="md:absolute inset-0 bg-black/10 backdrop-blur-sm" />
 
             <div className="relative flex flex-col flex-1">
             <ChatHeader user={partner} onBack={onBack} isTyping={isTyping} />
