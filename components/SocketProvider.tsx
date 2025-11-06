@@ -54,8 +54,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const pathname = usePathname();
     const router = useRouter();
 
-
-
     // 🧩 اتصال به Socket.io
     useEffect(() => {
         const s = io('http://localhost:3001', { transports: ['websocket'] });
@@ -151,7 +149,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         return () => {
             s.disconnect();
         };
-    }, [pathname, router]);
+    }, [pathname]);
 
     // 🔸 ورود یوزر از sessionStorage
     useEffect(() => {
@@ -193,26 +191,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     // 🔕 صفر کردن پیام‌های ناخوانده
-
     const markAsRead = (userId: string) => {
-        if (!socket || !userRef.current) return;
-
-        // صفر کردن شمارنده
         setUnreadCount(prev => ({ ...prev, [userId]: 0 }));
-
-        // پیدا کردن پیام‌های ناخوانده
-        const unreadMessages = messages
-            .filter(m => m.senderId === userId && !m.read)
-            .map(m => m.id);
-
-        if (unreadMessages.length) {
-            socket.emit('message:read', {
-                messageIds: unreadMessages,
-                userId: userRef.current.id,
-            });
-        }
     };
-
 
     // 🗂️ لود گفتگو
     const loadConversation = async (conversationId: string) => {
@@ -241,7 +222,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
                 markAsRead,
                 loadConversation,
                 clearMessages,
-
             }}
         >
             {children}
