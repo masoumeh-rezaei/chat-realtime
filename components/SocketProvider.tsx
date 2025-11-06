@@ -54,6 +54,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const pathname = usePathname();
     const router = useRouter();
 
+
+
     // 🧩 اتصال به Socket.io
     useEffect(() => {
         const s = io('http://localhost:3001', { transports: ['websocket'] });
@@ -239,6 +241,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
                 markAsRead,
                 loadConversation,
                 clearMessages,
+
             }}
         >
             {children}

@@ -20,7 +20,7 @@ export default function ChatUserList({
     return (
         <>
             <h2 className="text-lg font-semibold text-gray-700 mb-4 border-b border-gray-300 pb-2">
-                کاربران آنلاین 💬
+                کاربران  💬
             </h2>
 
             {others.length === 0 && (
