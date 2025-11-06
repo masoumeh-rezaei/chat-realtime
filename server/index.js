@@ -12,27 +12,26 @@ app.use(express.json());
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-// مسیر فایل فیک دیتابیس
 const DATA_FILE = path.join(process.cwd(), "conversations.json");
 
-// دیتای در حافظه
+// دیتای موقتی در حافظه
 let conversations = {}; // conversationId → [messages]
 const onlineUsers = new Map(); // socket.id → user
 
-// --- 📂 لود دیتا از فایل در شروع سرور ---
+// 📂 بارگذاری گفتگوها از فایل
 async function loadConversations() {
     try {
         const data = await fs.readFile(DATA_FILE, "utf-8");
         conversations = JSON.parse(data || "{}");
-        console.log("📂 conversations loaded from file");
-    } catch (err) {
-        console.log("⚠️ No conversations file found. Creating a new one...");
+        console.log("📂 Conversations loaded from file");
+    } catch {
         conversations = {};
         await saveConversations();
+        console.log("⚠️ No file found, created new conversations.json");
     }
 }
 
-// --- 💾 ذخیره دیتا در فایل ---
+// 💾 ذخیره در فایل
 let writing = false;
 async function saveConversations() {
     if (writing) return;
@@ -48,7 +47,7 @@ async function saveConversations() {
     }, 100);
 }
 
-// --- 🌐 WebSocket logic ---
+// 🌐 WebSocket logic
 io.on("connection", (socket) => {
     console.log("🟢 Connected:", socket.id);
 
@@ -57,6 +56,7 @@ io.on("connection", (socket) => {
         io.emit("presence:update", Array.from(onlineUsers.values()));
     });
 
+    // ✉️ ارسال پیام
     socket.on("message:send", (msg) => {
         const { conversationId } = msg;
 
@@ -70,38 +70,60 @@ io.on("connection", (socket) => {
                 io.to(sid).emit("message:recv", msg);
             }
         }
+
+        // 📬 اطلاع به فرستنده که پیام تحویل داده شد
+        for (const [sid, u] of onlineUsers.entries()) {
+            if (u.id === msg.senderId) {
+                io.to(sid).emit("message:delivered", msg.id);
+            }
+        }
     });
 
+    // 👁‍🗨 وقتی پیام‌ها خوانده شدند
+    socket.on("message:read", ({ messageIds, userId }) => {
+        // پیام‌ها را در دیتابیس به حالت خوانده تغییر بده
+        for (const convId in conversations) {
+            conversations[convId] = conversations[convId].map((m) =>
+                messageIds.includes(m.id) ? { ...m, read: true } : m
+            );
+        }
+        saveConversations();
+
+        // اطلاع به تمام فرستنده‌ها
+        for (const [sid, u] of onlineUsers.entries()) {
+            if (u.id !== userId) {
+                io.to(sid).emit("message:read:update", messageIds);
+            }
+        }
+    });
+
+    // ✍️ تایپینگ
     socket.on("typing:start", ({ user, receiverId }) => {
         for (const [sid, u] of onlineUsers.entries()) {
-            if (u.id === receiverId) {
-                io.to(sid).emit("user:typing", { user, typing: true });
-            }
+            if (u.id === receiverId) io.to(sid).emit("user:typing", { user, typing: true });
         }
     });
 
     socket.on("typing:stop", ({ user, receiverId }) => {
         for (const [sid, u] of onlineUsers.entries()) {
-            if (u.id === receiverId) {
-                io.to(sid).emit("user:typing", { user, typing: false });
-            }
+            if (u.id === receiverId) io.to(sid).emit("user:typing", { user, typing: false });
         }
     });
 
+    // 🔴 قطع اتصال
     socket.on("disconnect", () => {
         onlineUsers.delete(socket.id);
         io.emit("presence:update", Array.from(onlineUsers.values()));
     });
 });
 
-// --- 📡 REST API برای گرفتن تاریخچه ---
+// 📡 API برای گرفتن تاریخچه
 app.get("/conversations/:id", (req, res) => {
     const convId = req.params.id;
-    const msgs = conversations[convId] || [];
-    res.json(msgs);
+    res.json(conversations[convId] || []);
 });
 
-// --- Start server ---
+// 🚀 Start server
 const PORT = 3001;
 loadConversations().then(() => {
     server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
