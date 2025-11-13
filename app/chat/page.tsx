@@ -36,7 +36,7 @@ export default function ChatsPage() {
     return (
         <div className="relative min-h-screen bg-gradient-to-tr from-blue-100 via-indigo-50 to-cyan-100 p-6 mt-0! pt-0!">
 
-            {/* 🧑‍💻 هدر و لیست کاربران */}
+            {/* header */}
             <div className="pt-14">
                 <ChatHeader me={me} />
                 <ChatUserList

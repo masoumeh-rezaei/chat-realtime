@@ -34,7 +34,7 @@ export default function ChatPage() {
         }
     }, [id, onlineUsers]);
 
-    // پیام خوانده‌شده‌ها
+    // read messages
     useEffect(() => {
         if (!me || !partner || !socket) return;
         const unreadMessages = messages
