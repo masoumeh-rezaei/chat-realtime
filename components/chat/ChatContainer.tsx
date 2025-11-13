@@ -11,7 +11,7 @@ interface ChatContainerProps {
     partner: ChatUser;
     messages: ChatMessage[];
     onBack: () => void;
-    onSend: (text: string) => void;
+    onSend: (text: string,image?:string) => void;
     onTypingStart: () => void;
     onTypingStop: () => void;
     isTyping: boolean;
@@ -29,17 +29,32 @@ export default function ChatContainer({
                                       }: ChatContainerProps) {
     return (
         <div
-            className="flex flex-col h-screen bg-cover bg-center relative"
+            className="flex flex-col h-full  bg-cover bg-center relative "
             style={{
                 backgroundImage: "url('/img/bg.png')",
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundAttachment: 'fixed',
             }}
         >
             <div className="md:absolute inset-0 bg-black/10 backdrop-blur-sm" />
 
-            <div className="relative flex flex-col flex-1">
+            <div className="relative flex flex-col flex-1 ">
             <ChatHeader user={partner} onBack={onBack} isTyping={isTyping} />
-            <ChatBody messages={messages} me={me} />
-            <Composer onSend={onSend} onTypingStart={onTypingStart} onTypingStop={onTypingStop} />
+
+
+                       <ChatBody messages={messages} me={me} />
+
+
+
+
+                        <Composer
+                            onSend={onSend}
+                            onTypingStart={onTypingStart}
+                            onTypingStop={onTypingStop}
+                        />
+
+
             </div>
         </div>
     );

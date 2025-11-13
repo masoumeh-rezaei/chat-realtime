@@ -16,7 +16,7 @@ export default function ChatHeader({ user, onBack, isTyping }: ChatHeaderProps) 
         <motion.div
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="flex items-center gap-3 px-4 py-3 bg-green-50 border-b border-gray-200 shadow-sm"
+            className="flex items-center gap-3 px-4 py-3 bg-green-50 border-b border-gray-200 shadow-sm fixed w-full mb-10 z-10"
         >
             <button
                 onClick={onBack}
