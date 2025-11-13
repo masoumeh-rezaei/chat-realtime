@@ -45,13 +45,14 @@ export default function ChatPage() {
         }
     }, [messages, me, partner, socket]);
 
-    const handleSend = (text: string) => {
+    const handleSend = (text: string, image?: string) => {
         if (!text.trim() || !me || !partner) return;
         const conversationId = [me.id, partner.id].sort().join('-');
         sendMessage({
             senderId: me.id,
             receiverId: partner.id,
             text,
+            image,
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             conversationId,
         });

@@ -1,12 +1,5 @@
 'use client';
-
-import React, {
-    createContext,
-    useContext,
-    useEffect,
-    useRef,
-    useState,
-} from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 import { usePathname, useRouter } from 'next/navigation';
@@ -25,6 +18,7 @@ interface SocketContextType {
     markAsRead: (userId: string) => void;
     loadConversation: (conversationId: string) => Promise<void>;
     clearMessages: () => void;
+    addReaction: (messageId: string, emoji: string) => void;
 }
 
 const SocketContext = createContext<SocketContextType>({
@@ -39,6 +33,7 @@ const SocketContext = createContext<SocketContextType>({
     markAsRead: () => {},
     loadConversation: async () => {},
     clearMessages: () => {},
+    addReaction: () => {},
 });
 
 export const useSocket = () => useContext(SocketContext);
@@ -49,12 +44,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [typingUser, setTypingUser] = useState<ChatUser | null>(null);
     const [unreadCount, setUnreadCount] = useState<Record<string, number>>({});
-
     const userRef = useRef<ChatUser | null>(null);
     const pathname = usePathname();
     const router = useRouter();
 
-    // 🧩 اتصال به Socket.io
+    // اتصال به Socket
     useEffect(() => {
         const s = io('http://localhost:3001', { transports: ['websocket'] });
 
@@ -62,40 +56,24 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         s.on('disconnect', () => console.log('❌ Socket disconnected'));
         s.on('presence:update', (users: ChatUser[]) => setOnlineUsers(users));
 
-        // 📩 دریافت پیام جدید
+        // پیام جدید
         s.on('message:recv', (msg: ChatMessage) => {
-            setMessages(prev => (prev.some(m => m.id === msg.id) ? prev : [...prev, msg]));
+            setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
 
-            // اگه پیام از طرف مقابل بود و توی چتش نیست
+            // اعلان پیام جدید
             if (userRef.current && msg.senderId !== userRef.current.id) {
                 const currentChatId = pathname.split('/').pop();
-
                 if (currentChatId !== msg.senderId) {
-                    // افزایش شمارنده پیام‌های ناخوانده
-                    setUnreadCount(prev => ({
+                    setUnreadCount((prev) => ({
                         ...prev,
                         [msg.senderId]: (prev[msg.senderId] || 0) + 1,
                     }));
 
-                    // 🔔 پخش صدای اعلان
                     const audio = new Audio('/sounds/notify.wav');
                     audio.play().catch(() => {});
-                    // 🔹 پیدا کردن اطلاعات فرستنده
-                    const sender =
-                        msg.sender || // اگه سرور خودش فرستاده باشه
-                        onlineUsers.find(u => u.id === msg.senderId) || // اگه آنلاین بود
-                        JSON.parse(localStorage.getItem(`user_${msg.senderId}`) || 'null') || // اگر قبلاً کش شده بود
-                        {
-                            name: 'کاربر ناشناس',
-                            username: msg.senderId.slice(0, 6),
-                            avatar: `https://robohash.org/${msg.senderId}.png`,
-                        };
 
-
-
-                    // 💬 نمایش Toast قابل کلیک
                     toast.custom(
-                        t => (
+                        (t) => (
                             <div
                                 onClick={() => {
                                     router.push(`/chat/${msg.senderId}`);
@@ -112,10 +90,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
                                 />
                                 <div>
                                     <p className="font-semibold text-gray-800">
-                                        پیام جدید از {sender.name}
+                                        پیام جدید از {msg.sender?.name || 'کاربر ناشناس'}
                                     </p>
                                     <p className="text-gray-600 text-sm truncate max-w-[180px]">
-                                        {msg.text}
+                                        {msg.text || '📷 عکس جدید'}
                                     </p>
                                 </div>
                             </div>
@@ -126,32 +104,55 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             }
         });
 
-        // 🟢 پیام تحویل داده شد
+        // تحویل پیام
         s.on('message:delivered', (messageId: string) => {
-            setMessages(prev =>
-                prev.map(m => (m.id === messageId ? { ...m, delivered: true } : m))
+            setMessages((prev) =>
+                prev.map((m) => (m.id === messageId ? { ...m, delivered: true } : m))
             );
         });
 
-        // 🔵 پیام خوانده شد
+        // خوانده شدن
         s.on('message:read:update', (ids: string[]) => {
-            setMessages(prev =>
-                prev.map(m => (ids.includes(m.id) ? { ...m, read: true } : m))
+            setMessages((prev) =>
+                prev.map((m) => (ids.includes(m.id) ? { ...m, read: true } : m))
             );
         });
 
-        // ✍️ تایپینگ
+        // تایپینگ
         s.on('user:typing', ({ user, typing }) => {
             setTypingUser(typing ? user : null);
         });
 
+        // واکنش (Reaction)
+        s.on('message:reaction', ({ messageId, emoji, userId, username }) => {
+            setMessages((prev) =>
+                prev.map((m) => {
+                    if (m.id !== messageId) return m;
+
+                    const reactions: Record<string, { userId: string; username: string }[]> = m.reactions || {};
+
+                    // حذف ری‌اکشن قبلی این کاربر از تمام emoji‌ها
+                    for (const key in reactions) {
+                        reactions[key] = reactions[key].filter((r) => r.userId !== userId);
+                        if (reactions[key].length === 0) delete reactions[key];
+                    }
+
+                    // اضافه کردن ری‌اکشن جدید
+                    if (!reactions[emoji]) reactions[emoji] = [];
+                    reactions[emoji].push({ userId, username });
+
+                    return { ...m, reactions };
+                })
+            );
+        });
+
+
+
         setSocket(s);
-        return () => {
-            s.disconnect();
-        };
+        return () => s.disconnect();
     }, [pathname]);
 
-    // 🔸 ورود یوزر از sessionStorage
+    // ورود کاربر
     useEffect(() => {
         if (!socket) return;
         const stored = sessionStorage.getItem('user');
@@ -168,20 +169,28 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         socket?.emit('login', user);
     };
 
+    // ارسال پیام (متن یا عکس)
     // ✉️ ارسال پیام
     const sendMessage = (msg: Omit<ChatMessage, 'id' | 'delivered' | 'read'>) => {
         if (!socket || !userRef.current) return;
+
         const message: ChatMessage = {
             ...msg,
             id: uuidv4(),
             delivered: false,
             read: false,
+            reactions: msg.reactions || {},
+            time: new Date().toLocaleTimeString('fa-IR', {
+                hour: '2-digit',
+                minute: '2-digit',
+            }),
         };
+
         socket.emit('message:send', message);
         setMessages(prev => [...prev, message]);
     };
 
-    // ⌨️ وضعیت تایپینگ
+
     const sendTyping = (isTyping: boolean, receiverId?: string) => {
         if (!socket || !userRef.current) return;
         socket.emit(isTyping ? 'typing:start' : 'typing:stop', {
@@ -190,12 +199,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         });
     };
 
-    // 🔕 صفر کردن پیام‌های ناخوانده
     const markAsRead = (userId: string) => {
-        setUnreadCount(prev => ({ ...prev, [userId]: 0 }));
+        setUnreadCount((prev) => ({ ...prev, [userId]: 0 }));
     };
 
-    // 🗂️ لود گفتگو
     const loadConversation = async (conversationId: string) => {
         try {
             const res = await fetch(`http://localhost:3001/conversations/${conversationId}`);
@@ -207,6 +214,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const clearMessages = () => setMessages([]);
+
+    // ✅ اضافه کردن واکنش به پیام
+    const addReaction = (messageId: string, emoji: string) => {
+        if (!socket || !userRef.current) return;
+        socket.emit('message:react', { messageId, emoji, userId: userRef.current.id });
+    };
 
     return (
         <SocketContext.Provider
@@ -222,6 +235,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
                 markAsRead,
                 loadConversation,
                 clearMessages,
+                addReaction,
             }}
         >
             {children}
