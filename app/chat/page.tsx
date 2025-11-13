@@ -1,5 +1,5 @@
 'use client';
-import { useSocket } from '@/components/SocketProvider';
+import { useSocket } from '@/context/SocketProvider';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ChatUser } from '@/types/user';

@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { useSocket } from '@/components/SocketProvider';
+import { useSocket } from '@/context/SocketProvider';
 import { useRouter } from 'next/navigation';
 import { faker } from '@faker-js/faker';
 import { motion } from 'framer-motion';

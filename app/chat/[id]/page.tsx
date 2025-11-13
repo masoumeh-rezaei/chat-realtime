@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState, useTransition } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useSocket } from '@/components/SocketProvider';
+import { useSocket } from '@/context/SocketProvider';
 import { ChatUser } from '@/types/user';
 import ChatContainer from '@/components/chat/ChatContainer';
 

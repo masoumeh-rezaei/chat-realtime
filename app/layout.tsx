@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import "./globals.css";
-import { SocketProvider } from "@/components/SocketProvider";
+import { SocketProvider } from "@/context/SocketProvider";
 import { Toaster } from 'react-hot-toast';
 
 

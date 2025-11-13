@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChatMessage, ChatUser } from '@/types/user';
 import MessageList from './MessageList';
-import { useSocket } from '@/components/SocketProvider';
+import { useSocket } from '@/context/SocketProvider';
 
 interface ChatBodyProps {
     messages: ChatMessage[];
